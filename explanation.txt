@@ -1,8 +1,10 @@
 Varlığını gir :
-Kullanıcı döviz miktarını el ile girecek başlangıçta default değer olarak 0 ata ve değişiklikten sonra değeri veritabanından son değerini gertir. ( Alım ve satım olarak iki buton olabilir. Ve opsiyonel olarak güncel kur değilde tarih seçimi ile o anki "geçmiş kur" değere göre alım veya satım seçepi için tarih girişi olabilirç)
+Kullanıcı döviz miktarını el ile girecek başlangıçta default değer olarak 0 ata ve değişiklikten sonra değeri veritabanından son değerini gertir. ( Alım ve satım olarak iki buton olabilir. Ve opsiyonel olarak güncel kur değilde tarih seçimi ile o anki "geçmiş kur" değere göre alım veya satım seçepi için tarih girişi olabilir.)
 
-Varlıkta yapılan depişiklikler liste olark eklenecek. İşlem tarihine göre sıralanacak ve bu şekilde her işlemde, değiişiklikte history tablosuna (yada haraketlerim ) adıyla eklenecek
+Varlıkta yapılan depişiklikler liste olark eklenecek. İşlem tarihine göre sıralanacak ve bu şekilde her işlemde, değiişiklikte history tablosuna (yada haraketlerim ) adıyla eklenecek.
 
-varlıpın toplam döviz değeri ve her bir döviz için varlık değerleri TL cinsinden sunulacak. Kar değerleri liste şeklinde her bir işlem için yapılan  karların listelenmei ve total kar hesaplanması.
+Varlıpın toplam döviz değeri ve her bir döviz için varlık değerleri TL cinsinden sunulacak. Kar değerleri liste şeklinde her bir işlem için yapılan  karların listelenmei ve total kar hesaplanması. ( Ve bu kar hesaplanması geçmiş tarih seçilerek de geçmişteki seçilen tarihteki güncel kura göre hesaplanıp gösterimi yapılacak.)
 
-haraketler listesinde seçime göre geçmiş andaki kur değerleri her bir döviz için sergilenecek.( Güncel kura göre özel bir gösterim yapılabilir.) 
+Haraketler listesinde seçime göre geçmiş andaki kur değerleri her bir döviz için sergilenecek.( Güncel kura göre karşılaştırma yapılan özel bir gösterim yapılabilir.) 
+
+Grafiksel olarak görüntülenebilir.
