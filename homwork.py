@@ -42,6 +42,7 @@ class MyApp(ThemedTk):
         self.ent11 = ttk.Entry(self.page0, font="Calibri")
         self.ent11.insert(0, "Döviz adeti")
         self.ent11.bind("<FocusIn>", self.clear_entry1)
+        self.ent11.bind("<KeyRelease>", self.on_ent11_change)
         self.ent11.grid(row=1, column=4, sticky='w')
     ### Döviz combo
         self.combo1 = ttk.Combobox(self.page0, values=doviz,width=30)
@@ -129,7 +130,10 @@ class MyApp(ThemedTk):
 
         self.lbl1 = ttk.Label(self.page1, text="Kur değerleri : ", font="Calibri", anchor='e', width=22)
         self.lbl1.grid(row=0, column=0,sticky='w')
-        
+        self.lbl21 = ttk.Label(self.page1, text="", font="Calibri", width=22)
+        self.lbl21.grid(row=0, column=0)
+        self.btn21 = ttk.Button(self.page1, text="Listeyi Yenile", command=self.yenile)
+        self.btn21.grid(row=0, column=0, sticky='e')
         self.ent21 = ttk.Entry(self.page1, font="Calibri",textvariable="")
         self.ent21.grid(row=1, column=0)
 
@@ -137,6 +141,7 @@ class MyApp(ThemedTk):
         self.ent22.grid(row=1, column=0, sticky='e')
 
         self.listbox21 = tk.Listbox(self.page1, yscrollcommand=self.scrollbar21.set,width=70,height=19,font=15)
+        self.listbox21.bind("<<ListboxSelect>>", self.on_select)
         for row in haraketler:
             self.listbox21.insert(tk.END, row)
         self.listbox21.grid(row=1, column=0, sticky='nsew')
@@ -154,6 +159,12 @@ class MyApp(ThemedTk):
         #self.ok.grid(row=0, column=0)
     def handler(self):
         print("Button clicked")
+    def yenile(self,event):
+        cursor.execute('''SELECT h.id, h.islem_turu, h.miktar, h.tarih, ad.altin_yada_doviz, h.altin_doviz_turu FROM history h FULL OUTER JOIN altin_doviz ad ON h.altin_yada_doviz = ad.id ORDER BY h.id DESC''')
+        haraketler = cursor.fetchall()
+        self.listbox21.delete(0, tk.END)
+        for row in haraketler:
+            self.listbox21.insert(tk.END, row)
     def on_ent12_change(self,event):
             value = float(self.ent12.get())
             print(value)
@@ -165,6 +176,28 @@ class MyApp(ThemedTk):
             for i in veri5["result"]:
                 if selected_value != "Altın":
                     if selected_value == i["name"]:
+                        satis_degeri = i['sellingstr']
+                        alis_degeri = i['buyingstr']
+                        satis_degeri = satis_degeri.replace(',', '.')
+                        alis_degeri=alis_degeri.replace(',', '.')
+                        satis_degeri = float(satis_degeri)
+                        alis_degeri=float(alis_degeri)
+            if satis_degeri and value and alis_degeri is not None:
+                sat=value*satis_degeri
+                self.listbox13.insert(tk.END, f"{sat}")
+                al=value*alis_degeri
+                self.listbox14.insert(tk.END, f"{al}")
+    def on_ent11_change(self,event):
+            value = float(self.ent11.get())
+            print(value)
+            self.listbox13.delete(0, tk.END)
+            self.listbox13.insert(tk.END, f"{'Satılırsa :':<30}")
+            self.listbox14.delete(0, tk.END)
+            self.listbox14.insert(tk.END, f"{'Alınırsa :':<30}")
+            selected_value = self.combo1.get()
+            for i in veri4["result"]:
+                if selected_value != "Döviz":
+                    if selected_value == i["code"]:
                         satis_degeri = i['sellingstr']
                         alis_degeri = i['buyingstr']
                         satis_degeri = satis_degeri.replace(',', '.')
@@ -193,6 +226,10 @@ class MyApp(ThemedTk):
                     #self.listbox12.insert(tk.END, i["name"] + " \t \t " + i["buyingstr"] + " \t \t "+ i["sellingstr"])
                 else:
                     print("bulunamadı")
+    def on_select(self, event):
+        selected_index = self.listbox21.curselection()
+        if selected_index:
+            selected_item = self.listbox21.get(selected_index)
     def on_select2(self, event):
             selected_value = self.combo2.get()
             print("seçilen değer : " + selected_value)
@@ -366,7 +403,7 @@ if __name__ == "__main__":
     cursor.execute('SELECT * FROM my_assets')
     rows = cursor.fetchall()
 
-    cursor.execute('''SELECT h.id, h.islem_turu, h.miktar, h.tarih, ad.altin_yada_doviz, h.altin_doviz_turu FROM history h FULL OUTER JOIN altin_doviz ad ON h.altin_yada_doviz = ad.id''')
+    cursor.execute('''SELECT h.id, h.islem_turu, h.miktar, h.tarih, ad.altin_yada_doviz, h.altin_doviz_turu FROM history h FULL OUTER JOIN altin_doviz ad ON h.altin_yada_doviz = ad.id ORDER BY h.id DESC''')
     haraketler = cursor.fetchall()
     # Değişiklikleri kaydet
     conn.commit()
