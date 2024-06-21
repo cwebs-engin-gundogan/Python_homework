@@ -81,8 +81,11 @@ class MyApp(ThemedTk):
         self.cal = DateEntry(self.page0, width=30, background='darkblue',foreground='white', borderwidth=2, year=2024)
         self.cal.grid(row=5, column=4,sticky='w')
 
-        self.lbl15 = ttk.Label(self.page0, text="              Varlığım", font="Calibri",background='#c7e9f0',width=20)
-        self.lbl15.grid(row=0, column=6)
+        self.listbox16 = tk.Listbox(self.page0,width=15,height=2,font=15)
+        self.listbox16.grid(row=5, column=5)
+
+        self.lbl16 = ttk.Label(self.page0, text="              Varlığım", font="Calibri",background='#c7e9f0',width=20)
+        self.lbl16.grid(row=0, column=6)
         self.listbox11 = tk.Listbox(self.page0,width=50,height=14)
         
         for row in rows:
@@ -147,9 +150,7 @@ class MyApp(ThemedTk):
         self.listbox21.grid(row=1, column=0, sticky='nsew')
         self.scrollbar21.config(command=self.listbox21.yview)
 
-    al=None 
-    sat=None
-    Total_varligim=None
+    
         #self.page1.grid_rowconfigure(1, weight=1)
         #self.page1.grid_columnconfigure(0, weight=1)
         
@@ -207,7 +208,7 @@ class MyApp(ThemedTk):
             if satis_degeri and value and alis_degeri is not None:
                 sat=value*satis_degeri
                 self.listbox13.insert(tk.END, f"{sat}")
-                al=value*alis_degeri
+                self.al=value*alis_degeri
                 self.listbox14.insert(tk.END, f"{al}")
     def on_select1(self, event):
             selected_value = self.combo1.get()
@@ -255,6 +256,22 @@ class MyApp(ThemedTk):
             self.ent12.delete(0, tk.END)
     def Al(self):
         islem_turu="Alım"
+        value = float(self.ent12.get())
+        print(value)
+        selected_value = self.combo2.get()
+        for i in veri5["result"]:
+            if selected_value != "Altın":
+                if selected_value == i["name"]:
+                    satis_degeri = i['sellingstr']
+                    alis_degeri = i['buyingstr']
+                    satis_degeri = satis_degeri.replace(',', '.')
+                    satis_degeri = alis_degeri.replace(',', '.')
+                    satis_degeri = float(satis_degeri)
+                    alis_degeri=float(alis_degeri)
+        if satis_degeri and value and alis_degeri is not None:
+            sat=value*satis_degeri
+            self.listbox13.insert(tk.END, f"{sat}")
+            al=value*alis_degeri
         try:
             miktar1 = int(self.ent11.get())
         except ValueError:
@@ -274,17 +291,21 @@ class MyApp(ThemedTk):
              altin_yada_doviz=1
              altin_doviz_turu=selected_combo1
              selected_date = self.cal.get_date()
-        cursor.execute('INSERT INTO history (islem_turu, miktar,altin_doviz_turu,tarih) VALUES (?, ?, ?, ?)', (islem_turu, miktar,altin_doviz_turu, selected_date))
         id=cursor.lastrowid
+        total=total + self.al
+        self.listbox21.delete(0, tk.END)
+        self.listbox11.insert(tk.END, total)
+        cursor.execute('INSERT INTO total (total_money) VALUES (?)', (total))
+        conn.commit()
         print(id)
         cursor.execute('INSERT INTO my_assets (altin_yada_doviz, miktar,islem_id,altin_doviz_turu) VALUES (?, ?, ? , ?)', (altin_yada_doviz, miktar,id,altin_doviz_turu))
         conn.commit()
         cursor.execute('SELECT * FROM my_assets')
         rows = cursor.fetchall()
         print(rows)
-        self.listbox11.delete(0, tk.END)
+        self.listbox16.delete(0, tk.END)
         for row in rows:
-            self.listbox11.insert(tk.END, row)
+            self.listbox16.insert(tk.END, row)
     def Sat(self):
         islem_turu="Satım"
         if int(self.Total_varligim)>int(self.sat):
@@ -367,12 +388,12 @@ if __name__ == "__main__":
     conn = sqlite3.connect('data.db')
     cursor = conn.cursor()
     
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT,email TEXT UNIQUE,name TEXT)''')    
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT,email TEXT UNIQUE,name TEXT)''')   
+    cursor.execute('''CREATE TABLE IF NOT EXISTS total (id INTEGER PRIMARY KEY AUTOINCREMENT , total_money REAL)''')
     user = "caglarengi@gmail.com"
     name = "caglar engin"
     cursor.execute('SELECT * FROM users WHERE email = ?', (user,))
     is_it_user = cursor.fetchone()
-
     if user is None:
         cursor.execute('INSERT INTO users (email, name) VALUES (?, ?)', (user, name))
         print(f"{ name} kullanıcısı eklendi.")
@@ -390,7 +411,8 @@ if __name__ == "__main__":
 
     cursor.execute('SELECT id FROM altin_doviz WHERE altin_yada_doviz = ?', ('Döviz',))
     doviz = cursor.fetchone()
-
+    cursor.execute('SELECT * FROM total order by id desc')
+    total= cursor.fetchone()
     # Eğer altin ve doviz kayıtları mevcut değilse, ekleyin
     if not altin:
         cursor.execute('INSERT INTO altin_doviz (altin_yada_doviz) VALUES (?)', ('Altın',))
