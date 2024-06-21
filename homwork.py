@@ -136,9 +136,9 @@ class MyApp(ThemedTk):
         self.ent22 = ttk.Entry(self.page1, font="Calibri")
         self.ent22.grid(row=1, column=0, sticky='e')
 
-        self.listbox21 = tk.Listbox(self.page1, yscrollcommand=self.scrollbar21.set,width=60)
-        for i in range(1000):
-            self.listbox21.insert(tk.END, str(i))
+        self.listbox21 = tk.Listbox(self.page1, yscrollcommand=self.scrollbar21.set,width=70,height=19,font=15)
+        for row in haraketler:
+            self.listbox21.insert(tk.END, row)
         self.listbox21.grid(row=1, column=0, sticky='nsew')
         self.scrollbar21.config(command=self.listbox21.yview)
 
@@ -236,14 +236,16 @@ class MyApp(ThemedTk):
              miktar=miktar1
              altin_yada_doviz=1
              altin_doviz_turu=selected_combo1
-        cursor.execute('INSERT INTO history (islem_turu, miktar) VALUES (?, ?)', (islem_turu, miktar))
+             selected_date = self.cal.get_date()
+        cursor.execute('INSERT INTO history (islem_turu, miktar,altin_doviz_turu,tarih) VALUES (?, ?, ?, ?)', (islem_turu, miktar,altin_doviz_turu, selected_date))
         id=cursor.lastrowid
         print(id)
-        cursor.execute('INSERT INTO my_assets (altin_yada_doviz, miktar,islem_id,altin_doviz_turu) VALUES (?, ?)', (altin_yada_doviz, miktar,id,altin_doviz_turu))
+        cursor.execute('INSERT INTO my_assets (altin_yada_doviz, miktar,islem_id,altin_doviz_turu) VALUES (?, ?, ? , ?)', (altin_yada_doviz, miktar,id,altin_doviz_turu))
         conn.commit()
         cursor.execute('SELECT * FROM my_assets')
         rows = cursor.fetchall()
         print(rows)
+        self.listbox11.delete(0, tk.END)
         for row in rows:
             self.listbox11.insert(tk.END, row)
     def Sat(self):
@@ -363,6 +365,9 @@ if __name__ == "__main__":
 
     cursor.execute('SELECT * FROM my_assets')
     rows = cursor.fetchall()
+
+    cursor.execute('''SELECT h.id, h.islem_turu, h.miktar, h.tarih, ad.altin_yada_doviz, h.altin_doviz_turu FROM history h FULL OUTER JOIN altin_doviz ad ON h.altin_yada_doviz = ad.id''')
+    haraketler = cursor.fetchall()
     # Değişiklikleri kaydet
     conn.commit()
     
