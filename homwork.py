@@ -84,6 +84,8 @@ class MyApp(ThemedTk):
         self.lbl15.grid(row=0, column=6)
         self.listbox11 = tk.Listbox(self.page0,width=50,height=14)
         
+        for row in rows:
+            self.listbox11.insert(tk.END, row)
         self.listbox11.grid(row=1, column=6,rowspan=5)
 
 
@@ -140,6 +142,9 @@ class MyApp(ThemedTk):
         self.listbox21.grid(row=1, column=0, sticky='nsew')
         self.scrollbar21.config(command=self.listbox21.yview)
 
+    al=None 
+    sat=None
+    Total_varligim=None
         #self.page1.grid_rowconfigure(1, weight=1)
         #self.page1.grid_columnconfigure(0, weight=1)
         
@@ -212,11 +217,63 @@ class MyApp(ThemedTk):
         if self.ent12.get() == "Altın adeti":
             self.ent12.delete(0, tk.END)
     def Al(self):
-        self.value = self.ent11.get()
-        print(f"Entry'den alınan değer: {self.value}")
-    def Sat():  
-        print("satıldı") 
-
+        islem_turu="Alım"
+        try:
+            miktar1 = int(self.ent11.get())
+        except ValueError:
+            miktar1=0
+        try:
+            miktar2 = int(self.ent12.get()) 
+        except ValueError:
+            miktar2=0        
+        selected_combo1=self.combo1.get()
+        selected_combo2=self.combo2.get()
+        if selected_combo1=="Döviz" and selected_combo2 !="Altın" and miktar1<=0 and miktar2>0:
+             miktar=miktar2
+             altin_yada_doviz=0
+             altin_doviz_turu=selected_combo2
+        elif selected_combo2=="Altın" and selected_combo1!="Döviz" and miktar2<=0 and miktar1>0:
+             miktar=miktar1
+             altin_yada_doviz=1
+             altin_doviz_turu=selected_combo1
+        cursor.execute('INSERT INTO history (islem_turu, miktar) VALUES (?, ?)', (islem_turu, miktar))
+        id=cursor.lastrowid
+        print(id)
+        cursor.execute('INSERT INTO my_assets (altin_yada_doviz, miktar,islem_id,altin_doviz_turu) VALUES (?, ?)', (altin_yada_doviz, miktar,id,altin_doviz_turu))
+        conn.commit()
+        cursor.execute('SELECT * FROM my_assets')
+        rows = cursor.fetchall()
+        print(rows)
+        for row in rows:
+            self.listbox11.insert(tk.END, row)
+    def Sat(self):
+        islem_turu="Satım"
+        if int(self.Total_varligim)>int(self.sat):
+            try:
+                miktar1 = int(self.ent11.get())
+            except ValueError:
+                miktar1=0
+            try:
+               miktar2 = int(self.ent12.get()) 
+            except ValueError:
+                miktar2=0   
+            selected_combo1=self.combo1.get()
+            selected_combo2=self.combo2.get()
+            if selected_combo1=="Döviz" and selected_combo2 !="Altın" and miktar1<=0 and miktar2>0:
+                miktar=miktar2
+                altin_yada_doviz=0
+                altin_doviz_turu=selected_combo2
+            elif selected_combo2=="Altın" and selected_combo1!="Döviz" and miktar2<=0 and miktar1>0:
+                miktar=miktar1
+                altin_yada_doviz=1
+                altin_doviz_turu=selected_combo1
+            cursor.execute('INSERT INTO history (islem_turu, miktar) VALUES (?, ?)', (islem_turu, miktar))
+            conn.commit()
+            id=cursor.lastrowid
+            cursor.execute('INSERT INTO my_assets (altin_yada_doviz, miktar,islem_id,altin_doviz_turu) VALUES (?, ?)', (altin_yada_doviz, miktar,id,altin_doviz_turu))
+            conn.commit()
+        else:
+             self.messagebox.showwarning("Uyarı", "Varlığınızdan fazla harcama yapmaktasınız. Buna izin verilemez!")
     def toggle_date_entry(self):
         if self.var.get() == 1:
             self.cal.pack(pady=20)
@@ -282,13 +339,33 @@ if __name__ == "__main__":
         print(f"{ name} kullanıcısı eklendi.")
     else:
         print(f"{ name} kullanıcısı zaten mevcut.")
-    conn.commit()
-    conn.close()
-
-    cursor.execute('''CREATE TABLE IF NOT EXISTS my_assets (id INTEGER PRIMARY KEY ,altin_yada_doviz INTEGER ,miktar REAL,FOREIGN KEY (altin_yada_doviz) REFERENCES altin_doviz(id))''')    
-
+    
     cursor.execute('''CREATE TABLE IF NOT EXISTS altin_doviz (id INTEGER PRIMARY KEY ,altin_yada_doviz TEXT UNIQUE)''')    
-    cursor.execute('''CREATE TABLE IF NOT EXISTS altin_cesitler (altin_yada_doviz INTEGER ,altin_yada_doviz TEXT UNIQUE)''') 
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS my_assets (id INTEGER PRIMARY KEY AUTOINCREMENT,altin_yada_doviz INTEGER ,miktar REAL,altin_doviz_turu TEXT,islem_id INTEGER,FOREIGN KEY (islem_id) REFERENCES history(id),FOREIGN KEY (altin_yada_doviz) REFERENCES altin_doviz(id))''')    
+    cursor.execute('''CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT,islem_turu TEXT ,miktar REAL, tarih TEXT,altin_yada_doviz INTEGER,altin_doviz_turu TEXT,FOREIGN KEY (altin_yada_doviz) REFERENCES altin_doviz(id))''')
+    #cursor.execute('''CREATE TABLE IF NOT EXISTS altin_cesitler (altin_yada_doviz INTEGER ,altin_yada_doviz TEXT )''') 
+    # altin ve doviz adlarında kayıtları kontrol et
+    cursor.execute('SELECT id FROM altin_doviz WHERE altin_yada_doviz = ?', ('Altın',))
+    altin = cursor.fetchone()
+
+    cursor.execute('SELECT id FROM altin_doviz WHERE altin_yada_doviz = ?', ('Döviz',))
+    doviz = cursor.fetchone()
+
+    # Eğer altin ve doviz kayıtları mevcut değilse, ekleyin
+    if not altin:
+        cursor.execute('INSERT INTO altin_doviz (altin_yada_doviz) VALUES (?)', ('Altın',))
+        print("altin kaydı eklendi.")
+
+    if not doviz:
+        cursor.execute('INSERT INTO altin_doviz (altin_yada_doviz) VALUES (?)', ('Döviz',))
+        print("doviz kaydı eklendi.")
+
+    cursor.execute('SELECT * FROM my_assets')
+    rows = cursor.fetchall()
+    # Değişiklikleri kaydet
+    conn.commit()
+    
     doviz = ["Döviz"]
     altin= ["Altın"]
     if veri2["success"]:
@@ -299,9 +376,11 @@ if __name__ == "__main__":
             for item in veri3["result"]:
                 altin.append(item['name']) 
     print(altin)    
-
+    
     app = MyApp()
     app.geometry("920x500")
     app.mainloop()
-
+    conn.commit()
+    # Bağlantıyı kapat
+    conn.close()
 # pen.mainloop()
